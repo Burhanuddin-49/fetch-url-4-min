@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic API Fetcher</title>
+    <title>Dynamic Website Viewer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,9 +18,9 @@
             background: white;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
+            text-align: center;
         }
         h1 {
-            text-align: center;
             color: #333;
         }
         label {
@@ -36,9 +36,10 @@
             border-radius: 4px;
         }
         button {
-            display: block;
-            width: 100%;
+            display: inline-block;
+            width: 48%;
             padding: 10px;
+            margin: 5px 1%;
             background: #007BFF;
             color: white;
             border: none;
@@ -49,63 +50,95 @@
         button:hover {
             background: #0056b3;
         }
-        .data {
-            margin-top: 20px;
+        button.stop {
+            background: #dc3545;
         }
-        pre {
-            background: #f9f9f9;
-            padding: 15px;
+        button.stop:hover {
+            background: #a71d2a;
+        }
+        iframe {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            overflow-x: auto;
+        }
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Dynamic API Fetcher</h1>
-        <div>
-            <label for="apiUrl">Enter API URL:</label>
-            <input type="url" id="apiUrl" placeholder="https://api.example.com/data">
-            <button id="startFetching">Start Fetching</button>
-        </div>
-        <div class="data">
-            <h3>Fetched Data:</h3>
-            <pre id="apiData">Waiting for API data...</pre>
-        </div>
+        <h1>Dynamic Website Viewer</h1>
+        <label for="websiteUrl">Enter Website URL:</label>
+        <input type="url" id="websiteUrl" placeholder="https://example.com">
+        <button id="startRefresh">Start Refresh</button>
+        <button id="stopRefresh" class="stop" disabled>Stop Refresh</button>
+        <iframe id="websiteFrame" src="" sandbox="allow-scripts allow-same-origin"></iframe>
+        <div class="status" id="refreshStatus">Status: Waiting to start...</div>
     </div>
     <script>
-        const apiUrlInput = document.getElementById('apiUrl');
-        const apiDataElement = document.getElementById('apiData');
-        const startFetchingButton = document.getElementById('startFetching');
+        const websiteUrlInput = document.getElementById('websiteUrl');
+        const websiteFrame = document.getElementById('websiteFrame');
+        const startRefreshButton = document.getElementById('startRefresh');
+        const stopRefreshButton = document.getElementById('stopRefresh');
+        const refreshStatus = document.getElementById('refreshStatus');
 
         let intervalId;
 
-        async function fetchData(apiUrl) {
-            try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error(`Error: ${response.statusText}`);
-                const data = await response.json();
-                apiDataElement.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                apiDataElement.textContent = `Failed to fetch API data: ${error.message}`;
-            }
+        // Function to load the website into the iframe
+        function loadWebsite(url) {
+            websiteFrame.src = url;
+            updateStatus(`Last refreshed at ${new Date().toLocaleTimeString()}`);
         }
 
-        startFetchingButton.addEventListener('click', () => {
-            const apiUrl = apiUrlInput.value.trim();
-            if (!apiUrl) {
-                alert('Please enter a valid API URL.');
+        // Function to update the refresh status
+        function updateStatus(message) {
+            refreshStatus.textContent = `Status: ${message}`;
+        }
+
+        // Event listener for Start Refresh button
+        startRefreshButton.addEventListener('click', () => {
+            const url = websiteUrlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter a valid URL.');
                 return;
             }
+
+            // Load the website immediately
+            loadWebsite(url);
 
             // Clear any existing interval
             if (intervalId) {
                 clearInterval(intervalId);
             }
 
-            // Fetch data immediately and start interval
-            fetchData(apiUrl);
-            intervalId = setInterval(() => fetchData(apiUrl), 4 * 60 * 1000); // 4 minutes
+            // Set up interval to reload the iframe every 4 minutes
+            intervalId = setInterval(() => {
+                loadWebsite(url);
+            }, 4 * 60 * 1000); // 4 minutes in milliseconds
+
+            // Enable the Stop button and disable Start button
+            stopRefreshButton.disabled = false;
+            startRefreshButton.disabled = true;
+            updateStatus('Started refreshing every 4 minutes.');
+        });
+
+        // Event listener for Stop Refresh button
+        stopRefreshButton.addEventListener('click', () => {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            // Disable the Stop button and enable Start button
+            stopRefreshButton.disabled = true;
+            startRefreshButton.disabled = false;
+            updateStatus('Stopped refreshing.');
         });
     </script>
 </body>

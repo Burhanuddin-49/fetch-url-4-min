@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic API Fetcher</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .data {
+            margin-top: 20px;
+        }
+        pre {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dynamic API Fetcher</h1>
+        <div>
+            <label for="apiUrl">Enter API URL:</label>
+            <input type="url" id="apiUrl" placeholder="https://api.example.com/data">
+            <button id="startFetching">Start Fetching</button>
+        </div>
+        <div class="data">
+            <h3>Fetched Data:</h3>
+            <pre id="apiData">Waiting for API data...</pre>
+        </div>
+    </div>
+    <script>
+        const apiUrlInput = document.getElementById('apiUrl');
+        const apiDataElement = document.getElementById('apiData');
+        const startFetchingButton = document.getElementById('startFetching');
+
+        let intervalId;
+
+        async function fetchData(apiUrl) {
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+                const data = await response.json();
+                apiDataElement.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                apiDataElement.textContent = `Failed to fetch API data: ${error.message}`;
+            }
+        }
+
+        startFetchingButton.addEventListener('click', () => {
+            const apiUrl = apiUrlInput.value.trim();
+            if (!apiUrl) {
+                alert('Please enter a valid API URL.');
+                return;
+            }
+
+            // Clear any existing interval
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+
+            // Fetch data immediately and start interval
+            fetchData(apiUrl);
+            intervalId = setInterval(() => fetchData(apiUrl), 4 * 60 * 1000); // 4 minutes
+        });
+    </script>
+</body>
+</html>
